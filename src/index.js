@@ -1,6 +1,11 @@
 class OwnReact {
   static createElement(...args) {
-    return [...args];
+    const [type, props, children] = args;
+    return { type, props, children };
+  }
+
+  static render(element, container) {
+    console.log(element, container);
   }
 }
 
