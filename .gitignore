@@ -12,3 +12,4 @@
 .idea/**/shelf
 
 npm-debug.log*
+.npmrc
