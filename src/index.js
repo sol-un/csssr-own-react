@@ -5,8 +5,7 @@ const isString = item => typeof item === "string";
 const isListener = name => name.startsWith("on");
 const isAttribute = name => !isListener(name) && name !== "children";
 const isTextElement = element => element.type === "TEXT ELEMENT";
-const isDomElement = element =>
-  typeof element.type === "string" || element.type === "TEXT ELEMENT";
+const isDomElement = element => typeof element.type === "string";
 
 const convertStringToTextElement = element =>
   isString(element)
@@ -56,7 +55,7 @@ const createPublicInstance = (element, internalInstance) => {
 };
 
 const instantiate = element => {
-  const { type, props, children } = element;
+  const { type, props } = element;
   const isDom = isDomElement(element);
 
   if (isDom) {
@@ -68,7 +67,7 @@ const instantiate = element => {
       updateDomProperties(dom, [], props);
     }
 
-    const childElements = children || [];
+    const childElements = props.children || [];
 
     const childInstances = childElements.map(instantiate);
     const childDoms = childInstances.map(childInstance => childInstance.dom);
@@ -95,7 +94,7 @@ class OwnReact {
 
   static createElement(type, props, ...children) {
     const childElements = children.map(convertStringToTextElement);
-    return { type, props, children: childElements };
+    return { type, props: { ...props, children: childElements } };
   }
 
   static render(element, container) {
@@ -114,12 +113,13 @@ class OwnReact {
       parentDom.removeChild(instance.dom);
       return null;
     }
-    if (instance.element.type !== element.type) {
-      const newInstance = this.instantiate(element);
-      parentDom.replaceChild(newInstance.parent, instance.dom);
-      return newInstance;
+    if (instance.element.type === element.type) {
+      updateDomProperties(instance.dom, instance.element.props, element.props);
+      instance.childInstances = this.reconcileChildren(instance, element);
+      instance.element = element;
+      return instance;
     }
-    if (instance.element.type === "string") {
+    if (typeof element.type === "string") {
       updateDomProperties(instance.dom, instance.element.props, element.props);
       instance.childInstances = this.reconcileChildren(instance, element);
       instance.element = element;

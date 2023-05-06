@@ -4,7 +4,8 @@ import List from "../src/List";
 test("jsx works", () => {
   expect(App).toEqual({
     type: List,
-    props: null,
-    children: []
+    props: {
+      children: []
+    }
   });
 });
