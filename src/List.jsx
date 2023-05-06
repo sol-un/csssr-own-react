@@ -7,7 +7,8 @@ class List extends OwnReact.Component {
   }
 
   render() {
-    return <div>Hello, React</div>;
+    const { children } = this.props;
+    return <div>{children}</div>;
   }
 }
 

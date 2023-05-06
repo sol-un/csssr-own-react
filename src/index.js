@@ -93,7 +93,7 @@ class OwnReact {
   }
 
   static createElement(type, props, ...children) {
-    const childElements = children.map(convertStringToTextElement);
+    const childElements = children.flatMap(convertStringToTextElement);
     return { type, props: { ...props, children: childElements } };
   }
 
