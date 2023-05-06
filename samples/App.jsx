@@ -1,10 +1,7 @@
 import OwnReact from "../src";
+// eslint-disable-next-line import/extensions
+import List from "../src/List.jsx";
 
-const App = (
-  <h1 prop1="prop value">
-    <div>Hello, World!</div>
-    <span>Hello, React!</span>
-  </h1>
-);
+const App = <List />;
 
 export default App;

@@ -1,9 +1,13 @@
+/* eslint-disable max-classes-per-file */
 /* eslint-disable no-param-reassign */
 
 const isString = item => typeof item === "string";
 const isListener = name => name.startsWith("on");
 const isAttribute = name => !isListener(name) && name !== "children";
 const isTextElement = element => element.type === "TEXT ELEMENT";
+const isDomElement = element =>
+  typeof element.type === "string" || element.type === "TEXT ELEMENT";
+
 const convertStringToTextElement = element =>
   isString(element)
     ? {
@@ -42,25 +46,45 @@ const updateDomProperties = (dom, prevProps, nextProps) => {
     });
 };
 
+const createPublicInstance = (element, internalInstance) => {
+  const { type, props } = element;
+  // eslint-disable-next-line new-cap
+  const publicInstance = new type(props);
+  // eslint-disable-next-line no-underscore-dangle
+  publicInstance.__internalInstance = internalInstance;
+  return publicInstance;
+};
+
 const instantiate = element => {
   const { type, props, children } = element;
+  const isDom = isDomElement(element);
 
-  const dom = isTextElement(element)
-    ? document.createTextNode("")
-    : document.createElement(type);
+  if (isDom) {
+    const dom = isTextElement(element)
+      ? document.createTextNode("")
+      : document.createElement(type);
 
-  if (props) {
-    updateDomProperties(dom, [], props);
+    if (props) {
+      updateDomProperties(dom, [], props);
+    }
+
+    const childElements = children || [];
+
+    const childInstances = childElements.map(instantiate);
+    const childDoms = childInstances.map(childInstance => childInstance.dom);
+    childDoms.forEach(childDom => {
+      return dom.appendChild(childDom);
+    });
+    const instance = { dom, element, childInstances };
+    return instance;
   }
 
-  const childElements = children || [];
-
-  const childInstances = childElements.map(instantiate);
-  const childDoms = childInstances.map(childInstance => childInstance.dom);
-  childDoms.forEach(childDom => {
-    return dom.appendChild(childDom);
-  });
-  const instance = { dom, element, childInstances };
+  const instance = {};
+  const publicInstance = createPublicInstance(element, instance);
+  const childElement = publicInstance.render();
+  const childInstance = instantiate(childElement);
+  const { dom } = childInstance;
+  Object.assign(instance, { dom, element, childInstance, publicInstance });
   return instance;
 };
 
@@ -90,16 +114,29 @@ class OwnReact {
       parentDom.removeChild(instance.dom);
       return null;
     }
-    if (instance.element.type === element.type) {
+    if (instance.element.type !== element.type) {
+      const newInstance = this.instantiate(element);
+      parentDom.replaceChild(newInstance.parent, instance.dom);
+      return newInstance;
+    }
+    if (instance.element.type === "string") {
       updateDomProperties(instance.dom, instance.element.props, element.props);
       instance.childInstances = this.reconcileChildren(instance, element);
       instance.element = element;
       return instance;
     }
-
-    const newInstance = this.instantiate(element);
-    parentDom.replaceChild(newInstance.parent, instance.dom);
-    return newInstance;
+    instance.publicInstance.props = element.props;
+    const childElement = instance.publicInstance.render();
+    const oldChildInstance = instance.childInstance;
+    const childInstance = this.reconcile(
+      parentDom,
+      oldChildInstance,
+      childElement
+    );
+    instance.dom = childInstance.dom;
+    instance.childInstance = childInstance;
+    instance.element = element;
+    return instance;
   }
 
   static reconcileChildren(instance, element) {
@@ -116,6 +153,26 @@ class OwnReact {
     }
     return newChildInstances.filter(newInstance => newInstance != null);
   }
+
+  static updateInstance(internalInstance) {
+    const parentDom = internalInstance.dom.parentNode;
+    const { element } = internalInstance;
+    this.reconcile(parentDom, internalInstance, element);
+  }
 }
 
+class Component {
+  constructor(props) {
+    this.props = props;
+    this.state = this.state || {};
+  }
+
+  setState(partialState) {
+    this.state = { ...this.state, ...partialState };
+    // eslint-disable-next-line no-underscore-dangle
+    OwnReact.updateInstance(this.__internalInstance);
+  }
+}
+
+OwnReact.Component = Component;
 export default OwnReact;
