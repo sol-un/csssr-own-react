@@ -2,11 +2,13 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-underscore-dangle */
 
-const isString = item => typeof item === "string";
-const isListener = name => name.startsWith("on");
-const isAttribute = name => !isListener(name) && name !== "children";
-const isTextElement = element => element.type === "TEXT ELEMENT";
-const isDomElement = element => typeof element.type === "string";
+import {
+  isString,
+  isAttribute,
+  isListener,
+  isTextElement,
+  isDomElement
+} from "./utils";
 
 const convertStringToTextElement = element =>
   isString(element)

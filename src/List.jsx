@@ -1,18 +1,5 @@
 import OwnReact from ".";
-
-const getRandomNumber = max => Math.floor(Math.random() * max);
-
-const shuffleElements = (arr, randomizer = getRandomNumber) => {
-  const shufflesAmount = getRandomNumber(10);
-  const copy = [...arr];
-
-  for (let i = 0; i < shufflesAmount - 1; i += 1) {
-    const first = randomizer(copy.length);
-    const second = randomizer(copy.length);
-    [copy[first], copy[second]] = [copy[second], copy[first]];
-  }
-  return copy;
-};
+import { shuffleArray } from "./utils";
 
 class Alphabet extends OwnReact.Component {
   constructor(props) {
@@ -24,7 +11,7 @@ class Alphabet extends OwnReact.Component {
 
   updateLetters() {
     const { letters } = this.state;
-    const newState = shuffleElements(letters);
+    const newState = shuffleArray(letters);
     this.setState({ letters: newState });
   }
 
