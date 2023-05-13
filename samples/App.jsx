@@ -1,6 +1,7 @@
 import OwnReact from "../src";
 // eslint-disable-next-line import/extensions
-import Alphabet from "../src/List.jsx";
+import List from "../src/List.jsx";
+import ListItem from "../src/ListItem";
 
 export const letters = [
   "а",
@@ -38,6 +39,12 @@ export const letters = [
   "я"
 ];
 
-const App = <Alphabet letters={letters} />;
+const App = (
+  <List>
+    {letters.map(letter => (
+      <ListItem letter={letter} />
+    ))}
+  </List>
+);
 
 export default App;
