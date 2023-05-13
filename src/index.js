@@ -1,5 +1,6 @@
 /* eslint-disable max-classes-per-file */
 /* eslint-disable no-param-reassign */
+/* eslint-disable no-underscore-dangle */
 
 const isString = item => typeof item === "string";
 const isListener = name => name.startsWith("on");
@@ -169,7 +170,6 @@ class Component {
 
   setState(partialState) {
     this.state = { ...this.state, ...partialState };
-    // eslint-disable-next-line no-underscore-dangle
     OwnReact.updateInstance(this.__internalInstance);
   }
 }
