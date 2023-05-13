@@ -46,48 +46,6 @@ const updateDomProperties = (dom, prevProps, nextProps) => {
     });
 };
 
-const createPublicInstance = (element, internalInstance) => {
-  const { type, props } = element;
-  // eslint-disable-next-line new-cap
-  const publicInstance = new type(props);
-  // eslint-disable-next-line no-underscore-dangle
-  publicInstance.__internalInstance = internalInstance;
-  return publicInstance;
-};
-
-const instantiate = element => {
-  const { type, props } = element;
-  const isDom = isDomElement(element);
-
-  if (isDom) {
-    const dom = isTextElement(element)
-      ? document.createTextNode("")
-      : document.createElement(type);
-
-    if (props) {
-      updateDomProperties(dom, [], props);
-    }
-
-    const childElements = props.children || [];
-
-    const childInstances = childElements.map(instantiate);
-    const childDoms = childInstances.map(childInstance => childInstance.dom);
-    childDoms.forEach(childDom => {
-      return dom.appendChild(childDom);
-    });
-    const instance = { dom, element, childInstances };
-    return instance;
-  }
-
-  const instance = {};
-  const publicInstance = createPublicInstance(element, instance);
-  const childElement = publicInstance.render();
-  const childInstance = instantiate(childElement);
-  const { dom } = childInstance;
-  Object.assign(instance, { dom, element, childInstance, publicInstance });
-  return instance;
-};
-
 class OwnReact {
   constructor() {
     this.rootInstance = null;
@@ -106,7 +64,7 @@ class OwnReact {
 
   static reconcile(parentDom, instance, element) {
     if (instance == null) {
-      const newInstance = instantiate(element);
+      const newInstance = this.instantiate(element);
       parentDom.appendChild(newInstance.dom);
       return newInstance;
     }
@@ -159,6 +117,49 @@ class OwnReact {
     const parentDom = internalInstance.dom.parentNode;
     const { element } = internalInstance;
     this.reconcile(parentDom, internalInstance, element);
+  }
+
+  static createPublicInstance(element, internalInstance) {
+    const { type, props } = element;
+    // eslint-disable-next-line new-cap
+    const publicInstance = new type(props);
+    publicInstance.__internalInstance = internalInstance;
+    return publicInstance;
+  }
+
+  static instantiate(element) {
+    const { type, props } = element;
+    const isDom = isDomElement(element);
+
+    if (isDom) {
+      const dom = isTextElement(element)
+        ? document.createTextNode("")
+        : document.createElement(type);
+
+      if (props) {
+        updateDomProperties(dom, [], props);
+      }
+
+      const childElements = props.children || [];
+
+      const childInstances = childElements.map(child =>
+        this.instantiate(child)
+      );
+      const childDoms = childInstances.map(childInstance => childInstance.dom);
+      childDoms.forEach(childDom => {
+        return dom.appendChild(childDom);
+      });
+      const instance = { dom, element, childInstances };
+      return instance;
+    }
+
+    const instance = {};
+    const publicInstance = this.createPublicInstance(element, instance);
+    const childElement = publicInstance.render();
+    const childInstance = this.instantiate(childElement);
+    const { dom } = childInstance;
+    Object.assign(instance, { dom, element, childInstance, publicInstance });
+    return instance;
   }
 }
 
