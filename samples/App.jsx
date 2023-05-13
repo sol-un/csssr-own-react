@@ -2,7 +2,7 @@ import OwnReact from "../src";
 // eslint-disable-next-line import/extensions
 import Alphabet from "../src/List.jsx";
 
-const letters = [
+export const letters = [
   "а",
   "б",
   "в",
